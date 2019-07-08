@@ -10,7 +10,7 @@ AABGameMode::AABGameMode()
 	PlayerControllerClass = AABPlayerController::StaticClass();
 
 	static ConstructorHelpers::FClassFinder<APawn> 
-		BP_PAWN(TEXT("/Game/ThirdPersonCPP/Blueprints/ThirdPersonCharacter.ThirdPersonCharacter"));
+		BP_PAWN(TEXT("/Game/Player/MyPlayer.MyPlayer"));
 	if (BP_PAWN.Succeeded())
 	{
 		DefaultPawnClass = BP_PAWN.Class;

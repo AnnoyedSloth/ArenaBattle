@@ -56,6 +56,8 @@ void AABPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	PlayerInputComponent->BindAxis(TEXT("MoveForward"), this, &AABPawn::UpDown);
+	PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &AABPawn::LeftRight);
 }
 
 void AABPawn::PostInitializeComponents()
@@ -68,4 +70,16 @@ void AABPawn::PossessedBy(AController* controller)
 {
 	//ABLOG_S(Warning)
 	Super::PossessedBy(controller);
+}
+
+void AABPawn::UpDown(float value)
+{
+	//ABLOG(Warning, TEXT("%f"), value)
+	AddMovementInput(GetActorForwardVector(), value);
+}
+
+void AABPawn::LeftRight(float value)
+{
+	//ABLOG(Warning, TEXT("%f"), value)
+	AddMovementInput(GetActorRightVector(), value);
 }

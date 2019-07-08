@@ -30,17 +30,20 @@ public:
 	void PostInitializeComponents() override;
 	void PossessedBy(AController* newController);
 
+	void UpDown(float value);
+	void LeftRight(float value);
+
 private:
 
-	UPROPERTY(EditAnywhere, Category = Collision, meta = (AllowPrivateAccess = true))
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Collision", meta = (AllowPrivateAccess = true))
 		UCapsuleComponent* capsule;
-	UPROPERTY(EditAnywhere, Category = Visual, meta = (AllowPrivateAccess = true))
+	UPROPERTY(EditDefaultsOnly, Category = Visual, meta = (AllowPrivateAccess = true))
 		USkeletalMeshComponent* mesh;
-	UPROPERTY(EditAnywhere, Category = Movement, meta = (AllowPrivateAccess = true))
+	UPROPERTY(EditDefaultsOnly, Category = Movement, meta = (AllowPrivateAccess = true))
 		UFloatingPawnMovement* movement;
-	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = true))
+	UPROPERTY(EditDefaultsOnly, Category = Camera, meta = (AllowPrivateAccess = true))
 		USpringArmComponent* springArm;
-	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = true))
+	UPROPERTY(EditDefaultsOnly, Category = Camera, meta = (AllowPrivateAccess = true))
 		UCameraComponent* camera;
 	
 };

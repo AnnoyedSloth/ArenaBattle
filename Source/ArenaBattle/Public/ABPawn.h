@@ -34,16 +34,15 @@ public:
 	void LeftRight(float value);
 
 private:
-
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Collision", meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision", meta = (AllowPrivateAccess = true))
 		UCapsuleComponent* capsule;
-	UPROPERTY(EditDefaultsOnly, Category = Visual, meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		USkeletalMeshComponent* mesh;
-	UPROPERTY(EditDefaultsOnly, Category = Movement, meta = (AllowPrivateAccess = true))
+	UPROPERTY(EditDefaultsOnly, Category = "Movement", meta = (AllowPrivateAccess = true))
 		UFloatingPawnMovement* movement;
-	UPROPERTY(EditDefaultsOnly, Category = Camera, meta = (AllowPrivateAccess = true))
+	UPROPERTY(EditDefaultsOnly, Category = "Camera", meta = (AllowPrivateAccess = true))
 		USpringArmComponent* springArm;
-	UPROPERTY(EditDefaultsOnly, Category = Camera, meta = (AllowPrivateAccess = true))
+	UPROPERTY(EditDefaultsOnly, Category = "Camera", meta = (AllowPrivateAccess = true))
 		UCameraComponent* camera;
 	
 };

@@ -33,6 +33,14 @@ AABPawn::AABPawn()
 		mesh->SetSkeletalMesh(SK_MESH.Object);
 	}
 	
+	mesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+
+	static ConstructorHelpers::FClassFinder<UAnimInstance> 
+		WARRIOR_ANIM(TEXT("/Game/Animation/WarriorAnimBlueprint.WarriorAnimBlueprint_C"));
+	if (WARRIOR_ANIM.Succeeded())
+	{
+		mesh->SetAnimInstanceClass(WARRIOR_ANIM.Class);
+	}
 	
 
 }
@@ -41,7 +49,12 @@ AABPawn::AABPawn()
 void AABPawn::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	//mesh->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+	//UAnimationAsset* animAsset = LoadObject<UAnimationAsset>(nullptr, TEXT("/Game/Animation/WarriorRun.WarriorRun"));
+	//if (animAsset)
+	//{
+	//	mesh->PlayAnimation(animAsset, true);
+	//}
 }
 
 // Called every frame

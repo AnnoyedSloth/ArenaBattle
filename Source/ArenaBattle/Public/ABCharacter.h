@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+#include "ArenaBattle.h"
 #include "GameFramework/Character.h"
 #include "ABCharacter.generated.h"
 
@@ -19,6 +19,26 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	enum class EControlMode
+	{
+		GTA,
+		DIABLO
+	};
+
+	void ChangeMode();
+	void SetControlMode(EControlMode controlMode);
+
+	EControlMode curControlMode = EControlMode::DIABLO;
+	FVector directionToMove = FVector::ZeroVector;
+
+	float armLengthTo = 0.0f;
+	FRotator armRotationTo = FRotator::ZeroRotator;
+
+	// adjust arm length interpolation speed
+	float armLengthSpeed = 0.0f;
+	// adjust arm rotation interpolation speed
+	float armRotationSpeed = 0.0f;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -26,6 +46,45 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	
-	
+	virtual void PostInitializeComponents() override;
+
+
+private:
+	UPROPERTY(VisibleAnywhere, Category = Camera, meta = (AllowPrivateAccess = true))
+		USpringArmComponent* springArm;
+
+	UPROPERTY(VisibleAnywhere, Category = Camera, meta = (AllowPrivateAccess = true))
+		UCameraComponent* camera;
+
+	UPROPERTY()
+		class UABAnimInstance* animInstance;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, meta = (AllowPrivateAccess = true))
+		bool isAttacking;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, meta = (AllowPrivateAccess = true))
+		bool canNextCombo;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, meta = (AllowPrivateAccess = true))
+		bool isComboInputOn;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, meta = (AllowPrivateAccess = true))
+		int32 currentCombo;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, meta = (AllowPrivateAccess = true))
+		int32 maxCombo;
+
+private:
+
+	void MoveForward(float value);
+	void MoveRight(float value);
+	void LookUp(float value);
+	void Turn(float value);
+	void Attack();
+
+	void AttackStartComboState();
+	void AttackEndComboState();
+
+	// AddDynamic 등 Delegate를 이용하기 위해선 UFUNCTION 매크로 지정이 필수!
+	UFUNCTION()
+		void OnAttackMontageEnded(UAnimMontage* montage, bool isInterrupted);
+
+
 };

@@ -14,5 +14,10 @@ void AABPlayerController::Possess(APawn* pawn)
 	Super::Possess(pawn);
 }
 
+void AABPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
 
-
+	FInputModeGameOnly inputMode;
+	SetInputMode(inputMode);
+}

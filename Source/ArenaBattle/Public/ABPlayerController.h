@@ -18,5 +18,7 @@ public:
 	void PostInitializeComponents() override;
 	void Possess(APawn* pawn) override;
 	
+protected:
+	void BeginPlay() override;
 	
 };

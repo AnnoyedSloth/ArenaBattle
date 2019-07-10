@@ -48,6 +48,9 @@ public:
 
 	virtual void PostInitializeComponents() override;
 
+	virtual float TakeDamage(float damageAmount, struct FDamageEvent const& damageEvent,
+		class AController* eventInstigator, AActor* damageCauser) override;
+
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera, meta = (AllowPrivateAccess = true))
@@ -62,6 +65,7 @@ private:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, meta = (AllowPrivateAccess = true))
 		bool isAttacking;
 
+	// Combo attack system properties
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, meta = (AllowPrivateAccess = true))
 		bool canNextCombo;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, meta = (AllowPrivateAccess = true))
@@ -71,6 +75,14 @@ private:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, meta = (AllowPrivateAccess = true))
 		int32 maxCombo;
 
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, meta = (AllowPrivateAccess = true))
+		float attackRange;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, meta = (AllowPrivateAccess = true))
+		float attackRadius;
+
+	UPROPERTY(VisibleAnywhere, Category = Weapon)
+		USkeletalMeshComponent* weapon;
+
 private:
 
 	void MoveForward(float value);
@@ -79,12 +91,15 @@ private:
 	void Turn(float value);
 	void Attack();
 
+	// Combo attack system methods
 	void AttackStartComboState();
 	void AttackEndComboState();
+	void AttackCheck();
 
 	// AddDynamic 등 Delegate를 이용하기 위해선 UFUNCTION 매크로 지정이 필수!
 	UFUNCTION()
 		void OnAttackMontageEnded(UAnimMontage* montage, bool isInterrupted);
 
+	void Dead();
 
 };

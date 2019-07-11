@@ -76,14 +76,8 @@ Plugins/*/Intermediate/*
 # Cache files for the editor to use
 DerivedDataCache/*
 Content/InfinityBladeGrassLands/
-Content/InfinityBladeWarriors/Character/CompleteCharacters/SK_CharM_Barbarous.uasset
-Content/InfinityBladeWarriors/Character/CompleteCharacters/sk_CharM_Base.uasset
 Content/InfinityBladeWarriors/
 Content/Mannequin/
 Content/StarterContent/
-Content/ThirdPerson/
-Content/ThirdPersonCPP/
-Content/Book/
-Content/Destructible/SM_Plains_Castle_Fountain_01_DM.uasset
 Content/Geometry/
 Content/InfinityBladeWeapons/

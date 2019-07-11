@@ -51,6 +51,12 @@ public:
 	virtual float TakeDamage(float damageAmount, struct FDamageEvent const& damageEvent,
 		class AController* eventInstigator, AActor* damageCauser) override;
 
+public:
+	bool CanSetWeapon();
+	void SetWeapon(class AABWeapon* newWeapon);
+
+	UPROPERTY(VisibleAnywhere, Category = Weapon)
+		class AABWeapon* currentWeapon;
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera, meta = (AllowPrivateAccess = true))
@@ -58,6 +64,12 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = Camera, meta = (AllowPrivateAccess = true))
 		UCameraComponent* camera;
+
+	UPROPERTY(VisibleAnywhere, Category = Stat)
+		class UABCharacterStatComponent* characterStat;
+
+	UPROPERTY(VisibleAnywhere, Category = UI)
+		class UWidgetComponent* hpBarWidget;
 
 	UPROPERTY()
 		class UABAnimInstance* animInstance;
@@ -80,8 +92,7 @@ private:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, meta = (AllowPrivateAccess = true))
 		float attackRadius;
 
-	UPROPERTY(VisibleAnywhere, Category = Weapon)
-		USkeletalMeshComponent* weapon;
+
 
 private:
 

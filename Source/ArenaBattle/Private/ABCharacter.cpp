@@ -2,6 +2,9 @@
 
 #include "ABCharacter.h"
 #include "ABAnimInstance.h"
+#include "ABWeapon.h"
+#include "ABCharacterStatComponent.h"
+#include "Components/WidgetComponent.h"
 #include "DrawDebugHelpers.h"
 
 
@@ -13,13 +16,9 @@ AABCharacter::AABCharacter()
 
 	springArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	characterStat = CreateDefaultSubobject<UABCharacterStatComponent>(TEXT("CHARACTERSTAT"));
+	hpBarWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("HPBARWIDGET"));
 
-	springArm->SetupAttachment(GetCapsuleComponent());
-	camera->SetupAttachment(springArm);
-
-	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f), FRotator(0.0f, -90.0f, 0.0f));
-	springArm->TargetArmLength = 400.0f;
-	springArm->SetRelativeRotation(FRotator(-15.0f, 0.0f, 0.0f));
 
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh>
 		SK_MESH(TEXT("/Game/InfinityBladeWarriors/Character/CompleteCharacters/SK_CharM_Standard.SK_CharM_Standard"));
@@ -28,8 +27,6 @@ AABCharacter::AABCharacter()
 		GetMesh()->SetSkeletalMesh(SK_MESH.Object);
 	}
 
-	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
-
 	static ConstructorHelpers::FClassFinder<UAnimInstance>
 		WARRIOR_ANIM(TEXT("/Game/Animation/WarriorAnimBlueprint.WarriorAnimBlueprint_C"));
 	if (WARRIOR_ANIM.Succeeded())
@@ -37,24 +34,35 @@ AABCharacter::AABCharacter()
 		GetMesh()->SetAnimInstanceClass(WARRIOR_ANIM.Class);
 	}
 
-	FName weaponSocket(TEXT("hand_rSocket"));
-	if (GetMesh()->DoesSocketExist(weaponSocket))
+	static ConstructorHelpers::FClassFinder<UUserWidget>
+		UI_HUD(TEXT("/Game/UI/UI_HPBar.UI_HPBar_C"));
+	if (UI_HUD.Succeeded())
 	{
-		weapon = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WEAPON"));
-		static ConstructorHelpers::FObjectFinder<USkeletalMesh>
-			SK_WEAPON(TEXT("/Game/InfinityBladeWeapons/Weapons/Blade/Axes/Blade_RandorAxe/SK_Blade_RandorAxe.SK_Blade_RandorAxe"));
-		if (SK_WEAPON.Succeeded())
-		{
-			weapon->SetSkeletalMesh(SK_WEAPON.Object);
-		}
-		weapon->SetupAttachment(GetMesh(), weaponSocket);
+		hpBarWidget->SetWidgetClass(UI_HUD.Class);
+		hpBarWidget->SetDrawSize(FVector2D(150.0f, 50.0f));
 	}
 
+	springArm->SetupAttachment(GetCapsuleComponent());
+	camera->SetupAttachment(springArm);
+	hpBarWidget->SetupAttachment(GetMesh());
+	   
+	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f), FRotator(0.0f, -90.0f, 0.0f));
+	springArm->TargetArmLength = 400.0f;
+	springArm->SetRelativeRotation(FRotator(-15.0f, 0.0f, 0.0f));
+
+	hpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 180.0f));
+	hpBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
+	
 	SetControlMode(curControlMode);
 
+	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+
+
+	// 카메라 모드 변경시 길이/각 보간 속도
 	armLengthSpeed = 3.0f;
 	armRotationSpeed = 10.0f;
 	
+	//점프높이
 	GetCharacterMovement()->JumpZVelocity = 800.0f;
 
 	isAttacking = false;
@@ -63,8 +71,10 @@ AABCharacter::AABCharacter()
 	// 콤보 값에 대해 초기화 하기 위해서
 	AttackEndComboState();
 
+	// 충돌 프리셋 설정
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("ABCharacter"));
 
+	// 공격범위
 	attackRange = 100.0f;
 	attackRadius = 100.0f;
 }
@@ -73,6 +83,13 @@ AABCharacter::AABCharacter()
 void AABCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	//FName weaponSocket(TEXT("hand_rSocket"));
+	//AABWeapon* curWeapon = GetWorld()->SpawnActor<AABWeapon>(FVector::ZeroVector, FRotator::ZeroRotator);
+	//if (curWeapon != nullptr)
+	//{
+	//	curWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, weaponSocket);
+	//}
 
 }
 
@@ -116,7 +133,7 @@ void AABCharacter::PostInitializeComponents()
 
 		if (isComboInputOn)
 		{
-			ABLOG(Warning, TEXT("currentCombo = %d"), currentCombo);
+			//ABLOG(Warning, TEXT("currentCombo = %d"), currentCombo);
 			AttackStartComboState();
 			animInstance->JumpToAttackMontageSection(currentCombo);
 		}
@@ -124,6 +141,15 @@ void AABCharacter::PostInitializeComponents()
 	});
 
 	animInstance->onAttackHitCheck.AddUObject(this, &AABCharacter::AttackCheck);
+
+
+	characterStat->onHPIsZero.AddLambda([this]()->void
+	{
+		ABLOG(Warning, TEXT("OnHPIsZero"));
+		animInstance->SetDeadAnim();
+		SetActorEnableCollision(false);
+
+	});
 
 	//ABLOG(Warning, TEXT("PostInitializeComponents Called and End"))
 }
@@ -331,7 +357,7 @@ void AABCharacter::AttackCheck()
 			ABLOG(Warning, TEXT("Hit Actor Name : %s"), *hitResult.Actor->GetName());
 
 			FDamageEvent damageEvent;
-			hitResult.Actor->TakeDamage(50.0f, damageEvent, GetController(), this);
+			hitResult.Actor->TakeDamage(characterStat->GetAttack(), damageEvent, GetController(), this);
 
 		}
 	}
@@ -345,11 +371,11 @@ float AABCharacter::TakeDamage(float damageAmount, struct FDamageEvent const& da
 
 	if (finalDamage > 0.0f)
 	{
-		animInstance->SetDeadAnim();
-		SetActorEnableCollision(false);
+		
+		characterStat->SetDamage(finalDamage);
 
-		FTimerHandle deadHandle;
-		GetWorldTimerManager().SetTimer(deadHandle, this, &AABCharacter::Dead, 1.0f, false);
+		//FTimerHandle deadHandle;
+		//GetWorldTimerManager().SetTimer(deadHandle, this, &AABCharacter::Dead, 1.0f, false);
 
 	}
 
@@ -359,4 +385,20 @@ float AABCharacter::TakeDamage(float damageAmount, struct FDamageEvent const& da
 void AABCharacter::Dead()
 {
 	Destroy(this);
+}
+
+bool AABCharacter::CanSetWeapon()
+{
+	return (nullptr == currentWeapon);
+}
+
+void AABCharacter::SetWeapon(class AABWeapon* newWeapon)
+{
+	FName weaponSocket(TEXT("hand_rSocket"));
+	if (newWeapon != nullptr)
+	{
+		newWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, weaponSocket);
+		newWeapon->SetOwner(this);
+		currentWeapon = newWeapon;
+	}
 }

@@ -47,7 +47,6 @@ AFountain::AFountain()
 
 	rotateSpeed = 3.0f;
 
-
 	movement->RotationRate = FRotator(0.0f, rotateSpeed, 0.0f);
 
 }

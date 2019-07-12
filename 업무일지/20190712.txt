@@ -1,0 +1,7 @@
+- GameInstance 초기화 관련 특정 상황 시 Crash 이슈 발생하였으나 예외처리 적용하여 해결
+- UMG 및 AI모듈, TaskNode 사용 시 각각 프로젝트명.Build.cs 파일에서 UMG, AIModule, GameplayTasks 를 추가해야함
+- Behavior Tree Task에서 ExecuteTask함수는 Aborted, Failed, Succeeded, InProgress 중 하나의 값을 반환해야한다.
+
+Daily
+- 언리얼 UI기능인 UMG 사용하여 체력게이지 구현 및 피격시 업데이트 구현
+- AIController와 Behavior Tree 사용하여 간단한 순찰 및 추적 AI 구현

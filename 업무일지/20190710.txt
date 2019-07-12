@@ -1,0 +1,2 @@
+- AnimInstance에 DECLARE_MULTICAST_DELEGATE(함수명)을 선언하여 델리게이트 설정 가능
+- 

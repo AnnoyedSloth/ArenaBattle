@@ -1,0 +1,6 @@
+- animInstance와 animation blueprint, pawn 사이의 관계와 통신 방식에 대해 이해
+- AddDynamic 등 Delegate를 이용하기 위해선 UFUNCTION 지정이 필수란것에 대한 이해
+- Animation Instance를 Pawn 내에서 Casting된 포인터로서 초기화하려면 PostInitializeComponents 함수에서 초기화하면 된다. AddDynamic 또한 마찬가지
+- Animation Montage를 이용한 공격
+- Attack flag를 통한 Animation montage의 중복 실행 방지
+- Animation Montage의 Notifies에 Notify를 등록하면 해당 이름이 Animation Instance 클래스에서 AnimNotify_ 뒤에 붙은 이름의 함수가 실행된다(ex. Montage에서 Notify의 이름이 "OnHit"이라면 해당 애니메이션 실행 시 Animation Instance 클래스의 AnimNotify_OnHit() 함수가 실행됨

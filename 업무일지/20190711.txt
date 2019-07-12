@@ -1,0 +1,19 @@
+- Collision preset 설정을 통해 원하는 타입과의 overlap 및 collision을 설정할 수 있다
+- Skeletal Bone에 Socket을 심어 원하는 Location, Rotation을 지정하여 무기를 착용할 수 있다
+- TSubclassOf 템플릿에 특정 클래스를 사용하면 해당 클래스의 자식클래스만 인식할 수 있다
+
+ConstructorHelpers::FObjectFinder<타입명> 변수명(TEXT("경로")); 사용시 타입별 함수
+- StaticMesh : SetStaticMesh
+- Effect : SetTemplate
+- Widget UI : SetWidgetClass
+
+- ActorComponent에서 InitializeComponent함수를 이니셜라이즈 하려면 생성자에서 bWantsInitializeComponent의 bool값을 true로 지정해주면 된다
+
+ABCharacterStatComponent의 50번째줄에서 gameInstance->GetABCharacterData(newLevel)로 ABGameInstance의 ABCharacterTable의 유효성검사를 하게 되는데 유효성검사시 Crash가 발생. 원인 모름
+
+
+- Daily : 	Collision/Trace channel에 대한 이해로 충돌/트리거 상호작용에 대한 이해
+		Item Box 이용한 무기교체 구현
+		Effect 사용법
+		CSV 파일 파싱
+		

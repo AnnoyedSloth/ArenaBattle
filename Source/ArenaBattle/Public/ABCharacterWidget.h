@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+#include "ArenaBattle.h"
 #include "Blueprint/UserWidget.h"
 #include "ABCharacterWidget.generated.h"
 
@@ -14,7 +14,16 @@ class ARENABATTLE_API UABCharacterWidget : public UUserWidget
 {
 	GENERATED_BODY()
 	
+public:
+	void BindCharacterStat(class UABCharacterStatComponent* newCharacterStat);
+
+protected:
+	virtual void NativeConstruct() override;
+	void UpdateHPWidget();
+
+private:
+	TWeakObjectPtr<class UABCharacterStatComponent> currentCharacterStat;
 	
-	
-	
+	UPROPERTY()
+		class UProgressBar* hpProgressBar;
 };

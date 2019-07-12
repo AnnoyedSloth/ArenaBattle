@@ -47,7 +47,7 @@ void UABCharacterStatComponent::SetNewLevel(int32 newLevel)
 	UABGameInstance* gameInstance = 
 		Cast<UABGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
 
-	currentStatData = gameInstance->GetABCharacterData(newLevel);
+	if(gameInstance) currentStatData = gameInstance->GetABCharacterData(newLevel);
 	
 	if (currentStatData != nullptr)
 	{
@@ -62,11 +62,9 @@ void UABCharacterStatComponent::SetNewLevel(int32 newLevel)
 
 void UABCharacterStatComponent::SetDamage(float newDamage)
 {
-	currentHP = FMath::Clamp<float>(currentHP - newDamage, 0.0f, currentStatData->maxHP);
-	if (currentHP <= 0.0f)
-	{
-		onHPIsZero.Broadcast();
-	}
+	ABCHECK(currentStatData != nullptr);
+
+	SetHP(FMath::Clamp<float>(currentHP - newDamage, 0.0f, currentStatData->maxHP));
 }
 
 float UABCharacterStatComponent::GetAttack()

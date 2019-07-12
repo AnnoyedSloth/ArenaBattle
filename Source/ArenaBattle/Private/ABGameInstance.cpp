@@ -11,7 +11,7 @@ UABGameInstance::UABGameInstance()
 	if (DT_ABCHARACTER.Succeeded())
 	{
 		ABCharacterTable = DT_ABCHARACTER.Object;
-		ABLOG(Warning, TEXT("found Character table"))
+		//ABLOG(Warning, TEXT("found Character table"))
 	}
 	else
 	{
@@ -37,7 +37,7 @@ FABCharacterData* UABGameInstance::GetABCharacterData(int32 level)
 	}
 	else
 	{
-		ABLOG(Warning, TEXT("found Character table"))
+		//ABLOG(Warning, TEXT("found Character table"))
 		return ABCharacterTable->FindRow<FABCharacterData>(*FString::FromInt(level), TEXT(""));
 	}
 }

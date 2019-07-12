@@ -3,8 +3,10 @@
 #include "ABCharacter.h"
 #include "ABAnimInstance.h"
 #include "ABWeapon.h"
+#include "ABAIController.h"
 #include "ABCharacterStatComponent.h"
 #include "Components/WidgetComponent.h"
+#include "ABCharacterWidget.h"
 #include "DrawDebugHelpers.h"
 
 
@@ -18,6 +20,9 @@ AABCharacter::AABCharacter()
 	camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	characterStat = CreateDefaultSubobject<UABCharacterStatComponent>(TEXT("CHARACTERSTAT"));
 	hpBarWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("HPBARWIDGET"));
+
+	AIControllerClass = AABAIController::StaticClass();
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
 
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh>
@@ -127,7 +132,7 @@ void AABCharacter::PostInitializeComponents()
 	//ABLOG(Warning, TEXT("PostInitializeComponents Called and Start"))
 	// 람다식으로 델리게이트 로직 등록
 	animInstance->onNextAttackCheck.AddLambda([this]() -> void {
-		
+
 		//ABLOG(Warning, TEXT("OnNextAttackCheck"))
 		canNextCombo = false;
 
@@ -137,21 +142,26 @@ void AABCharacter::PostInitializeComponents()
 			AttackStartComboState();
 			animInstance->JumpToAttackMontageSection(currentCombo);
 		}
-
 	});
 
 	animInstance->onAttackHitCheck.AddUObject(this, &AABCharacter::AttackCheck);
 
-
-	characterStat->onHPIsZero.AddLambda([this]()->void
-	{
+	characterStat->onHPIsZero.AddLambda([this]()->void{
 		ABLOG(Warning, TEXT("OnHPIsZero"));
 		animInstance->SetDeadAnim();
 		SetActorEnableCollision(false);
-
 	});
 
-	//ABLOG(Warning, TEXT("PostInitializeComponents Called and End"))
+	UABCharacterWidget* characterWidget = 
+		Cast<UABCharacterWidget>(hpBarWidget->GetUserWidgetObject());
+
+
+	if (characterWidget)
+	{
+		//ABLOG(Warning, TEXT("Character Widget Casting Succeeded"));
+		characterWidget->BindCharacterStat(characterStat);
+	}
+
 }
 
 // Called to bind functionality to input
@@ -253,7 +263,14 @@ void AABCharacter::SetControlMode(EControlMode controlMode)
 		GetCharacterMovement()->bOrientRotationToMovement = false;
 		GetCharacterMovement()->bUseControllerDesiredRotation = true;
 		break;
+	case EControlMode::NPC:
+		bUseControllerRotationYaw = false;
+		GetCharacterMovement()->bUseControllerDesiredRotation = false;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		GetCharacterMovement()->RotationRate = FRotator(0.0f, 480.0f, 0.0f);
+		break;
 	}
+
 }
 
 void AABCharacter::ChangeMode()
@@ -293,10 +310,12 @@ void AABCharacter::Attack()
 // 애니메이션이 끝났을 때 델리게이트로 호출됨
 void AABCharacter::OnAttackMontageEnded(UAnimMontage* montage, bool isInterrupted)
 {
-	ABCHECK(isAttacking)
+	ABCHECK(isAttacking);
+	ABCHECK(currentCombo > 0);
 	isAttacking = false;
 	AttackEndComboState();
 	
+	onAttackEnd.Broadcast();
 }
 
 // 공격 시 콤보
@@ -354,8 +373,8 @@ void AABCharacter::AttackCheck()
 	{
 		if (hitResult.Actor.IsValid())
 		{
-			ABLOG(Warning, TEXT("Hit Actor Name : %s"), *hitResult.Actor->GetName());
-
+			//ABLOG(Warning, TEXT("Hit Actor Name : %s"), *hitResult.Actor->GetName());
+ 
 			FDamageEvent damageEvent;
 			hitResult.Actor->TakeDamage(characterStat->GetAttack(), damageEvent, GetController(), this);
 
@@ -367,7 +386,7 @@ float AABCharacter::TakeDamage(float damageAmount, struct FDamageEvent const& da
 	class AController* eventInstigator, AActor* damageCauser)
 {
 	float finalDamage = Super::TakeDamage(damageAmount, damageEvent, eventInstigator, damageCauser);
-	ABLOG(Warning, TEXT("Actor : %s took Damage : %f"), *GetName(), finalDamage);
+	//ABLOG(Warning, TEXT("Actor : %s took Damage : %f"), *GetName(), finalDamage);
 
 	if (finalDamage > 0.0f)
 	{
@@ -400,5 +419,21 @@ void AABCharacter::SetWeapon(class AABWeapon* newWeapon)
 		newWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, weaponSocket);
 		newWeapon->SetOwner(this);
 		currentWeapon = newWeapon;
+	}
+}
+
+void AABCharacter::PossessedBy(AController* newController)
+{
+	Super::PossessedBy(newController);
+
+	if (IsPlayerControlled())
+	{
+		SetControlMode(EControlMode::DIABLO);
+		GetCharacterMovement()->MaxWalkSpeed = 600.0f;
+	}
+	else
+	{
+		SetControlMode(EControlMode::NPC);
+		GetCharacterMovement()->MaxWalkSpeed = 300.0f;
 	}
 }

@@ -8,6 +8,6 @@ public class ArenaBattleTarget : TargetRules
 	public ArenaBattleTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Game;
-		ExtraModuleNames.Add("ArenaBattle");
+        ExtraModuleNames.AddRange(new string[] { "ArenaBattle", "ArenaBattleSetting" });
 	}
 }

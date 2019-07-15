@@ -8,6 +8,6 @@ public class ArenaBattleEditorTarget : TargetRules
 	public ArenaBattleEditorTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Editor;
-		ExtraModuleNames.Add("ArenaBattle");
-	}
+		ExtraModuleNames.AddRange(new string[] { "ArenaBattle", "ArenaBattleSetting" });
+    }
 }

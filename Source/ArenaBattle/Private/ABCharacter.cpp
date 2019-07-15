@@ -8,6 +8,9 @@
 #include "Components/WidgetComponent.h"
 #include "ABCharacterWidget.h"
 #include "DrawDebugHelpers.h"
+#include "ABCharacterSetting.h"
+#include "ABGameInstance.h"
+#include "ABPlayerController.h"
 
 
 // Sets default values
@@ -21,9 +24,19 @@ AABCharacter::AABCharacter()
 	characterStat = CreateDefaultSubobject<UABCharacterStatComponent>(TEXT("CHARACTERSTAT"));
 	hpBarWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("HPBARWIDGET"));
 
-	AIControllerClass = AABAIController::StaticClass();
+	AIControllerClass = AABPlayerController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
+	// Custum ini reading line
+	//auto defaultSetting = GetDefault<UABCharacterSetting>();
+	//if (defaultSetting->characterAssets.Num() > 0)
+	//{
+	//	for (auto characterAsset : defaultSetting->characterAssets)
+	//	{
+	//		ABLOG(Warning, TEXT("Character Asset : %s"), *characterAsset.ToString());
+	//	}
+	//}
+	//
 
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh>
 		SK_MESH(TEXT("/Game/InfinityBladeWarriors/Character/CompleteCharacters/SK_CharM_Standard.SK_CharM_Standard"));
@@ -96,6 +109,22 @@ void AABCharacter::BeginPlay()
 	//	curWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, weaponSocket);
 	//}
 
+	if (!IsPlayerControlled())
+	{
+		ABLOG(Warning, TEXT("Player controlled"));
+		auto defaultSetting = GetDefault<UABCharacterSetting>();
+		int32 randIndex = FMath::RandRange(0, defaultSetting->characterAssets.Num() - 1);
+		characterAssetToLoad = defaultSetting->characterAssets[randIndex];
+
+		auto gameInstance = Cast<UABGameInstance>(GetGameInstance());
+
+		if (gameInstance)
+		{
+			ABLOG(Warning, TEXT("Game Instance exist"));
+			assetStreamingHandle = gameInstance->streamableManager.RequestAsyncLoad(
+				characterAssetToLoad, FStreamableDelegate::CreateUObject(this, &AABCharacter::OnAssetLoadCompleted));
+		}
+	}
 }
 
 // Called every frame
@@ -435,5 +464,16 @@ void AABCharacter::PossessedBy(AController* newController)
 	{
 		SetControlMode(EControlMode::NPC);
 		GetCharacterMovement()->MaxWalkSpeed = 300.0f;
+	}
+}
+
+void AABCharacter::OnAssetLoadCompleted()
+{
+	assetStreamingHandle->ReleaseHandle();
+	ABLOG(Warning, TEXT("OnAssetLoadCompleted"));
+	TSoftObjectPtr<USkeletalMesh> loadedAssetPath(characterAssetToLoad);
+	if (loadedAssetPath.IsValid())
+	{
+		GetMesh()->SetSkeletalMesh(loadedAssetPath.Get());
 	}
 }

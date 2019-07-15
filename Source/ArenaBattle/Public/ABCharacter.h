@@ -99,7 +99,8 @@ private:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, meta = (AllowPrivateAccess = true))
 		float attackRadius;
 
-
+	FSoftObjectPath characterAssetToLoad = FSoftObjectPath(nullptr);
+	TSharedPtr<struct FStreamableHandle> assetStreamingHandle;
 
 private:
 
@@ -118,5 +119,7 @@ private:
 		void OnAttackMontageEnded(UAnimMontage* montage, bool isInterrupted);
 
 	void Dead();
+
+	void OnAssetLoadCompleted();
 
 };

@@ -7,8 +7,11 @@
 		{
 			"Name": "ArenaBattleSetting",
 			"Type": "Runtime",
-			"LoadingPhase": "PreDefault"
-		}
+			"LoadingPhase": "PreDefault",
+			"AdditionalDependencies": [
+				"CoreUObject"
+			]
+		},
 		{
 			"Name": "ArenaBattle",
 			"Type": "Runtime",
@@ -16,7 +19,7 @@
 			"AdditionalDependencies": [
 				"Engine",
 				"UMG",
-				"AIModule"
+				"AIModule",
 				"ArenaBattleSetting"
 			]
 		}

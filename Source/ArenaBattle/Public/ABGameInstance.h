@@ -5,6 +5,7 @@
 #include "ArenaBattle.h"
 #include "Engine/DataTable.h"
 #include "Engine/GameInstance.h"
+#include "Engine/StreamableManager.h"
 #include "ABGameInstance.generated.h"
 
 /**
@@ -33,6 +34,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Data)
 		int32 nextExp;
+
 };
 
 UCLASS()
@@ -46,6 +48,7 @@ public:
 	virtual void Init() override;
 	FABCharacterData* GetABCharacterData(int32 level);
 
+	FStreamableManager streamableManager;
 private:
 	UPROPERTY()
 		class UDataTable* ABCharacterTable;

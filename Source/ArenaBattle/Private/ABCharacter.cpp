@@ -24,7 +24,8 @@ AABCharacter::AABCharacter()
 	characterStat = CreateDefaultSubobject<UABCharacterStatComponent>(TEXT("CHARACTERSTAT"));
 	hpBarWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("HPBARWIDGET"));
 
-	AIControllerClass = AABPlayerController::StaticClass();
+	//AIControllerClass = AABPlayerController::StaticClass();
+	AIControllerClass = AABAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
 	// Custum ini reading line
@@ -95,6 +96,15 @@ AABCharacter::AABCharacter()
 	// 공격범위
 	attackRange = 100.0f;
 	attackRadius = 100.0f;
+
+	assetIndex = 4;
+
+	SetActorHiddenInGame(true);
+	hpBarWidget->SetHiddenInGame(true);
+	bCanBeDamaged = false;
+
+	deadTimer = 5.0f;
+
 }
 
 // Called when the game starts or when spawned
@@ -109,22 +119,39 @@ void AABCharacter::BeginPlay()
 	//	curWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, weaponSocket);
 	//}
 
-	if (!IsPlayerControlled())
+	isPlayer = IsPlayerControlled();
+
+	if (isPlayer)
 	{
-		ABLOG(Warning, TEXT("Player controlled"));
-		auto defaultSetting = GetDefault<UABCharacterSetting>();
-		int32 randIndex = FMath::RandRange(0, defaultSetting->characterAssets.Num() - 1);
-		characterAssetToLoad = defaultSetting->characterAssets[randIndex];
-
-		auto gameInstance = Cast<UABGameInstance>(GetGameInstance());
-
-		if (gameInstance)
-		{
-			ABLOG(Warning, TEXT("Game Instance exist"));
-			assetStreamingHandle = gameInstance->streamableManager.RequestAsyncLoad(
-				characterAssetToLoad, FStreamableDelegate::CreateUObject(this, &AABCharacter::OnAssetLoadCompleted));
-		}
+		playerController = Cast<AABPlayerController>(GetController());
+		ABCHECK(playerController);
 	}
+	else
+	{
+		aiController = Cast<AABAIController>(GetController());
+		ABCHECK(aiController);
+	}
+
+	auto defaultSetting = GetDefault<UABCharacterSetting>();
+
+	if (isPlayer)
+	{
+		assetIndex = 4;
+	}
+	else
+	{
+		assetIndex = FMath::RandRange(0, defaultSetting->characterAssets.Num() - 1);
+	}
+
+	characterAssetToLoad = defaultSetting->characterAssets[assetIndex];
+	
+	auto gameInstance = Cast<UABGameInstance>(GetGameInstance());
+	ABCHECK(gameInstance);
+
+	assetStreamingHandle = gameInstance->streamableManager.RequestAsyncLoad(characterAssetToLoad,
+		FStreamableDelegate::CreateUObject(this, &AABCharacter::OnAssetLoadCompleted));
+	SetCharacterState(ECharacterState::LOADING);
+
 }
 
 // Called every frame
@@ -144,6 +171,59 @@ void AABCharacter::Tick(float DeltaTime)
 			GetController()->SetControlRotation(FRotationMatrix::MakeFromX(directionToMove).Rotator());
 			AddMovementInput(directionToMove);
 		}
+		break;
+	}
+}
+
+void AABCharacter::SetCharacterState(ECharacterState newState)
+{
+	ABCHECK(currentState != newState);
+	currentState = newState;
+
+	switch (currentState)
+	{
+	case ECharacterState::LOADING:
+		if (isPlayer)
+		{
+			DisableInput(playerController);
+		}
+		SetActorHiddenInGame(true);
+		hpBarWidget->SetHiddenInGame(true);
+		bCanBeDamaged = false;
+		break;
+	case ECharacterState::READY:
+		SetActorHiddenInGame(false);
+		hpBarWidget->SetHiddenInGame(false);
+		bCanBeDamaged = true;
+
+		characterStat->onHPIsZero.AddLambda([this]()-> void{
+			SetCharacterState(ECharacterState::DEAD);
+		});
+
+		auto characterWidget = Cast<UABCharacterWidget>(hpBarWidget->GetUserWidgetObject());
+		ABCHECK(characterWidget);
+		characterWidget->BindCharacterStat(characterStat);
+
+		if (isPlayer)
+		{
+			SetControlMode(EControlMode::DIABLO);
+			GetCharacterMovement()->MaxWalkSpeed = 600.0f;
+			EnableInput(playerController);
+		}
+		else
+		{
+			SetControlMode(EControlMode::NPC);
+			GetCharacterMovement()->MaxWalkSpeed = 400.0f;
+			aiController->RunAI();
+		}
+
+		break;
+	case ECharacterState::DEAD:
+		SetActorEnableCollision(false);
+		GetMesh()->SetHiddenInGame(false);
+		hpBarWidget->SetHiddenInGame(true);
+		animInstance->SetDeadAnim();
+		bCanBeDamaged = false;
 		break;
 	}
 }
@@ -472,8 +552,8 @@ void AABCharacter::OnAssetLoadCompleted()
 	assetStreamingHandle->ReleaseHandle();
 	ABLOG(Warning, TEXT("OnAssetLoadCompleted"));
 	TSoftObjectPtr<USkeletalMesh> loadedAssetPath(characterAssetToLoad);
-	if (loadedAssetPath.IsValid())
-	{
-		GetMesh()->SetSkeletalMesh(loadedAssetPath.Get());
-	}
+	ABCHECK(loadedAssetPath.IsValid());
+
+	GetMesh()->SetSkeletalMesh(loadedAssetPath.Get());
+	SetCharacterState(ECharacterState::READY);
 }

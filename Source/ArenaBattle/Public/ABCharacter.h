@@ -65,6 +65,9 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = Weapon)
 		class AABWeapon* currentWeapon;
 
+	void SetCharacterState(ECharacterState newState);
+	ECharacterState GetcharacterState() const { return currentState; }
+
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera, meta = (AllowPrivateAccess = true))
 		USpringArmComponent* springArm;
@@ -101,6 +104,25 @@ private:
 
 	FSoftObjectPath characterAssetToLoad = FSoftObjectPath(nullptr);
 	TSharedPtr<struct FStreamableHandle> assetStreamingHandle;
+
+	int32 assetIndex = 0;
+
+	UPROPERTY(Transient, VisibleInstanceOnly, BlueprintReadOnly, Category = State, meta = (AllowPrivateAccess = true))
+		ECharacterState currentState;
+	
+	UPROPERTY(Transient, VisibleInstanceOnly, BlueprintReadOnly, Category = State, meta = (AllowPrivateAccess = true))
+		bool isPlayer;
+
+	UPROPERTY()
+		class AABAIController* aiController;
+
+	UPROPERTY()
+		class AABPlayerController* playerController;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = State, meta = (AllowPrivateAccess = true))
+		float deadTimer;
+
+	FTimerHandle deadTimerHandle = {};
 
 private:
 

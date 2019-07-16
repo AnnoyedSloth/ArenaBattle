@@ -1,0 +1,6 @@
+- State에 따라 캐릭터의 상태 관리(Init - Loading - Ready - Dead)
+
+
+Daily
+- 캐릭터의 현재 상태에 따른 collision, controller 등 전환
+- 실시간 Map streaming 및 Item spawn

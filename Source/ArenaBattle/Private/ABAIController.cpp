@@ -30,9 +30,18 @@ AABAIController::AABAIController()
 void AABAIController::Possess(APawn* pawn)
 {
 	Super::Possess(pawn);
+}
+
+void AABAIController::UnPossess()
+{
+	Super::UnPossess();
+}
+
+void AABAIController::RunAI()
+{
 	if (UseBlackboard(bbAsset, Blackboard))
 	{
-		Blackboard->SetValueAsVector(HomePosKey, pawn->GetActorLocation());
+		Blackboard->SetValueAsVector(HomePosKey, GetPawn()->GetActorLocation());
 		if (!RunBehaviorTree(btAsset))
 		{
 			ABLOG(Error, TEXT("AIController couldn't run behavior tree!"));
@@ -40,7 +49,12 @@ void AABAIController::Possess(APawn* pawn)
 	}
 }
 
-void AABAIController::UnPossess()
+void AABAIController::StopAI()
 {
-	Super::UnPossess();
+	auto behaviorTreeComponent = Cast<UBehaviorTreeComponent>(BrainComponent);
+	if (behaviorTreeComponent)
+	{
+		// 트리 정지
+		behaviorTreeComponent->StopTree(EBTStopMode::Safe);
+	}
 }

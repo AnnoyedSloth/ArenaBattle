@@ -64,7 +64,7 @@ AABSection::AABSection()
 
 	
 
-	noBattle = false;
+	noBattle = true;
 
 	enemySpawnTime = 2.0f;
 	itemBoxSpawnTime = 5.0f;

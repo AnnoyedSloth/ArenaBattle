@@ -68,6 +68,8 @@ public:
 	void SetCharacterState(ECharacterState newState);
 	ECharacterState GetcharacterState() const { return currentState; }
 
+	int32 GetExp() const;
+
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera, meta = (AllowPrivateAccess = true))
 		USpringArmComponent* springArm;

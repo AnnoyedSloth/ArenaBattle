@@ -33,6 +33,7 @@ public:
 	void SetDamage(float newDamage);
 	float GetAttack();
 	float GetHPRatio();
+	int32 GetDropExp() const;
 
 	FOnHPIsZeroDelegate onHPIsZero;
 	FOnHPChangedDelegate onHPChanged;

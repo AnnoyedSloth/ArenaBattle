@@ -451,6 +451,7 @@ void AABCharacter::Attack()
 		animInstance->PlayAttackMontage();
 		animInstance->JumpToAttackMontageSection(currentCombo);
 		isAttacking = true;
+		
 	}
 }
 
@@ -535,15 +536,19 @@ float AABCharacter::TakeDamage(float damageAmount, struct FDamageEvent const& da
 	float finalDamage = Super::TakeDamage(damageAmount, damageEvent, eventInstigator, damageCauser);
 	//ABLOG(Warning, TEXT("Actor : %s took Damage : %f"), *GetName(), finalDamage);
 
-	if (finalDamage > 0.0f)
+	characterStat->SetDamage(finalDamage);
+	if (currentState == ECharacterState::DEAD)
 	{
-
-		characterStat->SetDamage(finalDamage);
-
-		//FTimerHandle deadHandle;
-		//GetWorldTimerManager().SetTimer(deadHandle, this, &AABCharacter::Dead, 1.0f, false);
-
+		if (eventInstigator->IsPlayerController())
+		{
+			auto playerController = Cast<AABPlayerController>(eventInstigator);
+			ABCHECK(nullptr != playerController, 0.0f);
+			playerController->NPCKill(this);
+		}
 	}
+
+		
+
 
 	return finalDamage;
 }
@@ -594,4 +599,9 @@ void AABCharacter::OnAssetLoadCompleted()
 
 	GetMesh()->SetSkeletalMesh(loadedAssetPath.Get());
 	SetCharacterState(ECharacterState::READY);
+}
+
+int32 AABCharacter::GetExp() const
+{
+	return characterStat->GetDropExp();
 }

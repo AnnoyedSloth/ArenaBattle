@@ -21,6 +21,8 @@ public:
 
 	int32 GetGameScore() const;
 	int32 GetCharacterLevel() const;
+	float GetExpRatio() const;
+	bool AddExp(int32 incomeExp);
 
 	void InitPlayerData();
 
@@ -33,5 +35,11 @@ protected:
 	UPROPERTY(Transient)
 		int32 characterLevel;
 	
+	UPROPERTY(Transient)
+		int32 exp;
+
+protected:
+	void SetCharacterLevel(int32 newCharacterLevel);
+	struct FABCharacterData* currentStatData;
 	
 };

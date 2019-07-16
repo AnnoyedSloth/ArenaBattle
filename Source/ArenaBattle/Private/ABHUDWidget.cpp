@@ -51,6 +51,7 @@ void UABHUDWidget::UpdateCharacterStat()
 void UABHUDWidget::UpdatePlayerState()
 {
 	ABCHECK(currentPlayerState.IsValid());
+	expBar->SetPercent(currentPlayerState->GetExpRatio());
 	playerName->SetText(FText::FromString(currentPlayerState->GetPlayerName()));
 	playerLevel->SetText(FText::FromString(FString::FromInt(currentPlayerState->GetCharacterLevel())));
 	currentScore->SetText(FText::FromString(FString::FromInt(currentPlayerState->GetGameScore())));

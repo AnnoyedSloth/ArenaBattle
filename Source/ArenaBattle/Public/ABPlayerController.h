@@ -20,6 +20,7 @@ public:
 	void Possess(APawn* pawn) override;
 
 	class UABHUDWidget* GetHUDWidget() const { return hudWidget; }
+	void NPCKill(class AABCharacter* killedNPC) const;
 	
 protected:
 	void BeginPlay() override;
@@ -30,5 +31,8 @@ protected:
 private:
 	UPROPERTY()
 		class UABHUDWidget* hudWidget;
+
+	UPROPERTY()
+		class AABPlayerState* myPlayerState;
 	
 };

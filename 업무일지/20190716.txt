@@ -1,6 +1,8 @@
 - State에 따라 캐릭터의 상태 관리(Init - Loading - Ready - Dead)
+- FStreamableHandle assetStreamingHandle = gameInstance->streamableManager.RequestAsyncLoad()
 
 
 Daily
-- 캐릭터의 현재 상태에 따른 collision, controller 등 전환
 - 실시간 Map streaming 및 Item spawn
+- 비동기식으로 액터와 에셋을 로드하고 Enum State를 통해 상태를 관리하는 방식에 대해 이해
+- HUD Widget과 PlayerController 통해 UI Binding

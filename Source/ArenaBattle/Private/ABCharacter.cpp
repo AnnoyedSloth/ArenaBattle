@@ -11,12 +11,14 @@
 #include "ABCharacterSetting.h"
 #include "ABGameInstance.h"
 #include "ABPlayerController.h"
+#include "ABPlayerState.h"
+#include "ABHUDWidget.h"
 
 
 // Sets default values
 AABCharacter::AABCharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	springArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
@@ -64,14 +66,14 @@ AABCharacter::AABCharacter()
 	springArm->SetupAttachment(GetCapsuleComponent());
 	camera->SetupAttachment(springArm);
 	hpBarWidget->SetupAttachment(GetMesh());
-	   
+
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f), FRotator(0.0f, -90.0f, 0.0f));
 	springArm->TargetArmLength = 400.0f;
 	springArm->SetRelativeRotation(FRotator(-15.0f, 0.0f, 0.0f));
 
 	hpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 180.0f));
 	hpBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
-	
+
 	SetControlMode(curControlMode);
 
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
@@ -80,7 +82,7 @@ AABCharacter::AABCharacter()
 	// 카메라 모드 변경시 길이/각 보간 속도
 	armLengthSpeed = 3.0f;
 	armRotationSpeed = 10.0f;
-	
+
 	//점프높이
 	GetCharacterMovement()->JumpZVelocity = 800.0f;
 
@@ -144,7 +146,7 @@ void AABCharacter::BeginPlay()
 	}
 
 	characterAssetToLoad = defaultSetting->characterAssets[assetIndex];
-	
+
 	auto gameInstance = Cast<UABGameInstance>(GetGameInstance());
 	ABCHECK(gameInstance);
 
@@ -183,20 +185,30 @@ void AABCharacter::SetCharacterState(ECharacterState newState)
 	switch (currentState)
 	{
 	case ECharacterState::LOADING:
+	{
 		if (isPlayer)
 		{
 			DisableInput(playerController);
+
+			playerController->GetHUDWidget()->BindCharacterStat(characterStat);
+
+			auto playerState = Cast<AABPlayerState>(PlayerState);
+			ABCHECK(playerState);
+			characterStat->SetNewLevel(playerState->GetCharacterLevel());
 		}
 		SetActorHiddenInGame(true);
 		hpBarWidget->SetHiddenInGame(true);
 		bCanBeDamaged = false;
-		break;
+	}
+	break;
+
 	case ECharacterState::READY:
+	{
 		SetActorHiddenInGame(false);
 		hpBarWidget->SetHiddenInGame(false);
 		bCanBeDamaged = true;
 
-		characterStat->onHPIsZero.AddLambda([this]()-> void{
+		characterStat->onHPIsZero.AddLambda([this]()-> void {
 			SetCharacterState(ECharacterState::DEAD);
 		});
 
@@ -216,16 +228,42 @@ void AABCharacter::SetCharacterState(ECharacterState newState)
 			GetCharacterMovement()->MaxWalkSpeed = 400.0f;
 			aiController->RunAI();
 		}
+	}
+	break;
 
-		break;
 	case ECharacterState::DEAD:
+	{
 		SetActorEnableCollision(false);
 		GetMesh()->SetHiddenInGame(false);
 		hpBarWidget->SetHiddenInGame(true);
 		animInstance->SetDeadAnim();
 		bCanBeDamaged = false;
-		break;
+
+		if (isPlayer)
+		{
+			DisableInput(playerController);
+		}
+		else
+		{
+			aiController->StopAI();
+		}
+
+		GetWorld()->GetTimerManager().SetTimer(
+			deadTimerHandle, FTimerDelegate::CreateLambda([this]() -> void{
+				if (isPlayer)
+				{
+					//playerController->RestartLevel();
+				}
+				else
+				{
+					Destroy();
+				}
+
+			}), deadTimer, false);
 	}
+	break;
+	}
+	
 }
 
 void AABCharacter::PostInitializeComponents()
@@ -255,13 +293,13 @@ void AABCharacter::PostInitializeComponents()
 
 	animInstance->onAttackHitCheck.AddUObject(this, &AABCharacter::AttackCheck);
 
-	characterStat->onHPIsZero.AddLambda([this]()->void{
+	characterStat->onHPIsZero.AddLambda([this]()->void {
 		ABLOG(Warning, TEXT("OnHPIsZero"));
 		animInstance->SetDeadAnim();
 		SetActorEnableCollision(false);
 	});
 
-	UABCharacterWidget* characterWidget = 
+	UABCharacterWidget* characterWidget =
 		Cast<UABCharacterWidget>(hpBarWidget->GetUserWidgetObject());
 
 
@@ -282,7 +320,7 @@ void AABCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &AABCharacter::MoveRight);
 	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &AABCharacter::LookUp);
 	PlayerInputComponent->BindAxis(TEXT("Turn"), this, &AABCharacter::Turn);
-	
+
 	PlayerInputComponent->BindAction(TEXT("ChangeMode"), IE_Pressed, this, &AABCharacter::ChangeMode);
 	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &AABCharacter::Jump);
 	PlayerInputComponent->BindAction(TEXT("Attack"), IE_Pressed, this, &AABCharacter::Attack);
@@ -293,12 +331,12 @@ void AABCharacter::MoveForward(float value)
 	switch (curControlMode)
 	{
 	case EControlMode::GTA:
-	AddMovementInput(FRotationMatrix(GetControlRotation()).GetUnitAxis(EAxis::X), value);
-	break;
+		AddMovementInput(FRotationMatrix(GetControlRotation()).GetUnitAxis(EAxis::X), value);
+		break;
 
 	case EControlMode::DIABLO:
-		directionToMove.X = value;	
-	break;
+		directionToMove.X = value;
+		break;
 	}
 
 }
@@ -357,7 +395,7 @@ void AABCharacter::SetControlMode(EControlMode controlMode)
 		GetCharacterMovement()->bUseControllerDesiredRotation = false;
 		GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
 		break;
-	
+
 	case EControlMode::DIABLO:
 		//springArm->TargetArmLength = 800.0f;
 		//springArm->SetRelativeRotation(FRotator(-45.0f, 0.0f, 0.0f));
@@ -409,7 +447,7 @@ void AABCharacter::Attack()
 	else
 	{
 		ABCHECK(currentCombo == 0)
-		AttackStartComboState();
+			AttackStartComboState();
 		animInstance->PlayAttackMontage();
 		animInstance->JumpToAttackMontageSection(currentCombo);
 		isAttacking = true;
@@ -423,7 +461,7 @@ void AABCharacter::OnAttackMontageEnded(UAnimMontage* montage, bool isInterrupte
 	ABCHECK(currentCombo > 0);
 	isAttacking = false;
 	AttackEndComboState();
-	
+
 	onAttackEnd.Broadcast();
 }
 
@@ -475,7 +513,7 @@ void AABCharacter::AttackCheck()
 		false,
 		debugLifeTime
 	);
-	
+
 #endif
 
 	if (result)
@@ -483,7 +521,7 @@ void AABCharacter::AttackCheck()
 		if (hitResult.Actor.IsValid())
 		{
 			//ABLOG(Warning, TEXT("Hit Actor Name : %s"), *hitResult.Actor->GetName());
- 
+
 			FDamageEvent damageEvent;
 			hitResult.Actor->TakeDamage(characterStat->GetAttack(), damageEvent, GetController(), this);
 
@@ -499,7 +537,7 @@ float AABCharacter::TakeDamage(float damageAmount, struct FDamageEvent const& da
 
 	if (finalDamage > 0.0f)
 	{
-		
+
 		characterStat->SetDamage(finalDamage);
 
 		//FTimerHandle deadHandle;
